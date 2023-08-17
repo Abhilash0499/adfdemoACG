@@ -1,0 +1,26 @@
+{
+	"name": "DS_sqlusingkyvlt",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_sqlusingkyvlt",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "name",
+				"type": "varchar"
+			},
+			{
+				"name": "statecode",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "person"
+		}
+	}
+}

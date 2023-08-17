@@ -1,0 +1,22 @@
+{
+	"name": "DS_blobfolder",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_blobusingkyvlt",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "input"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
