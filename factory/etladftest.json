@@ -1,0 +1,9 @@
+{
+	"name": "etladftest",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "75a807e5-3721-42e8-a804-efccc3a5e802",
+		"tenantId": "c062495f-0c47-4001-96af-c033507abf87"
+	}
+}
