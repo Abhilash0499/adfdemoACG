@@ -1,0 +1,18 @@
+{
+	"name": "LS_blobusingkyvlt",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "lnkkeyvlt",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "myblob",
+				"secretVersion": "85c95e72078e4010b8d1ee890e3c90ef"
+			}
+		}
+	}
+}
