@@ -18,6 +18,18 @@
 		"LS_blobstorage_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://storageetltest.dfs.core.windows.net/"
+		},
+		"lnkkeyvlt_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://etltestkeyvault.vault.azure.net/"
+		},
+		"LS_blobusingkyvlt_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "myblob"
+		},
+		"LS_sqlusingkyvlt_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "mysqldb"
 		}
 	},
 	"variables": {
@@ -79,6 +91,19 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/lnkkeyvlt')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('lnkkeyvlt_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DS_azuresqldb')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -135,6 +160,52 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/LS_blobstorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_blobusingkyvlt')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "lnkkeyvlt",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "[parameters('LS_blobusingkyvlt_properties_typeProperties_connectionString_secretName')]",
+						"secretVersion": "85c95e72078e4010b8d1ee890e3c90ef"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnkkeyvlt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_sqlusingkyvlt')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "lnkkeyvlt",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "[parameters('LS_sqlusingkyvlt_properties_typeProperties_connectionString_secretName')]",
+						"secretVersion": "f9693a5ec9234abeb24df297f1761c77"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnkkeyvlt')]"
 			]
 		},
 		{
@@ -234,6 +305,167 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/DS_inputfolder')]",
 				"[concat(variables('factoryId'), '/datasets/DS_azuresqldb')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_blobfolder')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_blobusingkyvlt",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "input"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_blobusingkyvlt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_sqlusingkyvlt')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_sqlusingkyvlt",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "name",
+						"type": "varchar"
+					},
+					{
+						"name": "statecode",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "person"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_sqlusingkyvlt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_copydata_from blob_to_sqldb1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "cloned pipeline",
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.txt",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"preCopyScript": "truncate table dbo.person",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "name",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "name",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sate code ",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "statecode",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_blobfolder",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_sqlusingkyvlt",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-08-17T16:16:37Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_blobfolder')]",
+				"[concat(variables('factoryId'), '/datasets/DS_sqlusingkyvlt')]"
 			]
 		}
 	]
