@@ -1,0 +1,18 @@
+{
+	"name": "LS_sqlusingkyvlt",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "lnkkeyvlt",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "mysqldb",
+				"secretVersion": "f9693a5ec9234abeb24df297f1761c77"
+			}
+		}
+	}
+}
